@@ -35,7 +35,8 @@ homelab/
 │   ├── control-plane.yaml  # k3s control plane setup
 │   └── worker.yaml         # k3s worker node setup
 ├── scripts/                # Helper scripts
-│   └── check_tailscale.sh  # Connectivity verification
+│   ├── check_tailscale.sh  # Connectivity verification
+│   └── create-tfvars.sh    # Generate tfvars from environment
 └── docs/                   # Documentation
     └── private/            # Private notes and setup guides
 ```
@@ -51,7 +52,11 @@ homelab/
 2. **Tailscale Account**
    - Auth key for device registration
 
-3. **Local Tools**
+3. **Environment Variables** (in ~/.zshenv)
+   - `HETZNER_TOKEN` - Your Hetzner Cloud API token
+   - `TAILSCALE_AUTH_KEY` - Your Tailscale authentication key
+
+4. **Local Tools**
    - Terraform >= 1.5
    - Git
 
@@ -60,16 +65,17 @@ homelab/
 1. **Clone and configure:**
 ```bash
 git clone https://github.com/alexbenisch/homelab.git
-cd homelab/terraform
-cp lab.tfvars.example lab.tfvars
-# Edit lab.tfvars with your tokens
+cd homelab/
+# Create tfvars files from environment variables
+./scripts/create-tfvars.sh
 ```
 
 2. **Deploy infrastructure:**
 ```bash
+cd terraform/
 terraform init
 terraform plan -var-file="lab.tfvars"
-terraform apply
+terraform apply -var-file="lab.tfvars"
 ```
 
 3. **Access your cluster:**
@@ -111,17 +117,20 @@ terraform output kubeconfig_command
 Before deploying the full cluster, test Tailscale connectivity:
 
 ```bash
+# Create tailnet variables (or use ./scripts/create-tfvars.sh tailnet)
+./scripts/create-tfvars.sh tailnet
 cd tailnet/
-cp tailnet.tfvars.example tailnet.tfvars
-# Configure variables
-terraform apply
+terraform init
+terraform apply -var-file="tailnet.tfvars"
 ```
 
 ## 📖 Documentation
 
-- [Infrastructure Setup](docs/private/terraform_setup.md) - Complete deployment guide
-- [Dotfiles Integration](docs/private/dotfiles_integration.md) - Development environment details
-- [SSH Configuration](docs/private/ssh_key_configuration.md) - Access setup
+Complete documentation is maintained in the private `docs/private/` directory (gitignored) including:
+- Infrastructure setup and deployment guides  
+- Dotfiles integration details
+- SSH configuration and access setup
+- Credential management workflows
 
 ## 🔧 Configuration
 
