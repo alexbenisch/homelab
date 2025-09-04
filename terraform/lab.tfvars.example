@@ -1,0 +1,14 @@
+# Hetzner Cloud configuration
+hcloud_token = "your-hetzner-cloud-api-token-here"
+
+# Tailscale configuration  
+tailscale_auth_key = "your-tailscale-auth-key-here"
+
+# Cluster configuration
+cluster_name = "homelab"
+location = "nbg1"
+
+# Server sizing
+server_type_control_plane = "cx22"
+server_type_worker = "cx22"
+worker_count = 2

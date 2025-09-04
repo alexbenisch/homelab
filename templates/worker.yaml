@@ -1,0 +1,56 @@
+#cloud-config
+users:
+  - name: alex
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC... # Will be populated by Hetzner SSH key "alex@seven"
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/zsh
+    groups: sudo
+  - name: root
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - curl
+  - wget
+  - git
+  - zsh
+  - tmux
+  - unzip
+  - build-essential
+  - locales
+
+runcmd:
+  # Install Tailscale with proper error handling
+  - echo "Installing Tailscale..." >> /var/log/cloud-init-debug.log
+  - curl -fsSL https://tailscale.com/install.sh | sh
+  - echo "Tailscale installed, starting service..." >> /var/log/cloud-init-debug.log
+  - systemctl enable tailscaled
+  - systemctl start tailscaled
+  - sleep 10
+  - echo "Connecting to Tailscale..." >> /var/log/cloud-init-debug.log
+  - tailscale up --authkey=${tailscale_auth_key} --hostname=${hostname} --accept-routes --accept-dns
+  - echo "Tailscale status:" >> /var/log/cloud-init-debug.log
+  - tailscale status >> /var/log/cloud-init-debug.log
+  
+  # Wait for control plane to be ready and get token
+  - echo "Waiting for control plane..." >> /var/log/cloud-init-debug.log
+  - sleep 60
+  - until ping -c 1 ${control_plane_ip}; do sleep 5; done
+  
+  # Install k3s worker
+  - echo "Installing k3s worker..." >> /var/log/cloud-init-debug.log
+  - curl -sfL https://get.k3s.io | K3S_URL=https://${control_plane_ip}:6443 K3S_TOKEN=${k3s_token} INSTALL_K3S_EXEC="agent --node-ip=${private_ip}" sh -
+  - echo "k3s worker setup complete" >> /var/log/cloud-init-debug.log
+
+  # Setup dotfiles for alex user
+  - echo "Setting up dotfiles..." >> /var/log/cloud-init-debug.log
+  - sudo -u alex bash -c 'cd /home/alex && git clone https://github.com/alexbenisch/dotfiles.git'
+  - sudo -u alex bash -c 'cd /home/alex/dotfiles && bash setup'
+  - echo "Dotfiles setup complete" >> /var/log/cloud-init-debug.log
+  
+  # Change alex user shell to zsh
+  - chsh -s /bin/zsh alex
+
+final_message: "k3s worker node setup complete"

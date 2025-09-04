@@ -1,0 +1,47 @@
+#cloud-config
+users:
+  - name: alex
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC... # Will be populated by Hetzner SSH key "alex@seven"
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/zsh
+    groups: sudo
+  - name: root
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - curl
+  - wget
+  - git
+  - zsh
+  - tmux
+  - unzip
+  - build-essential
+  - locales
+
+runcmd:
+  # Install Tailscale with proper sequence
+  - echo "Installing Tailscale..." >> /var/log/tailscale-debug.log
+  - curl -fsSL https://tailscale.com/install.sh | sh
+  - echo "Starting Tailscale service..." >> /var/log/tailscale-debug.log
+  - systemctl enable tailscaled
+  - systemctl start tailscaled
+  - sleep 10
+  - echo "Connecting to Tailscale with hostname ${hostname}..." >> /var/log/tailscale-debug.log
+  - tailscale up --authkey=${tailscale_auth_key} --hostname=${hostname} --accept-routes --accept-dns
+  - echo "Tailscale connection result:" >> /var/log/tailscale-debug.log
+  - tailscale status >> /var/log/tailscale-debug.log
+  - echo "Node ${hostname} setup complete" >> /var/log/tailscale-debug.log
+
+  # Setup dotfiles for alex user
+  - echo "Setting up dotfiles..." >> /var/log/tailscale-debug.log
+  - sudo -u alex bash -c 'cd /home/alex && git clone https://github.com/alexbenisch/dotfiles.git'
+  - sudo -u alex bash -c 'cd /home/alex/dotfiles && bash setup'
+  - echo "Dotfiles setup complete" >> /var/log/tailscale-debug.log
+  
+  # Change alex user shell to zsh
+  - chsh -s /bin/zsh alex
+
+final_message: "Tailscale node ${hostname} setup complete"
