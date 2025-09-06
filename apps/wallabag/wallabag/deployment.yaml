@@ -1,0 +1,124 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wallabag
+  namespace: wallabag
+  labels:
+    app: wallabag
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wallabag
+  template:
+    metadata:
+      labels:
+        app: wallabag
+    spec:
+      initContainers:
+      - name: wait-for-postgres
+        image: busybox:1.35
+        command: ['sh', '-c']
+        args:
+        - |
+          echo "Waiting for PostgreSQL to be ready..."
+          until nc -z wallabag-postgres 5432; do
+            echo "PostgreSQL is not ready yet..."
+            sleep 2
+          done
+          echo "PostgreSQL is ready!"
+      containers:
+      - name: wallabag
+        image: wallabag/wallabag:latest
+        ports:
+        - containerPort: 80
+        env:
+        # Database configuration with SYMFONY__ prefix
+        - name: SYMFONY__ENV__DATABASE_DRIVER
+          valueFrom:
+            configMapKeyRef:
+              name: wallabag-config
+              key: DATABASE_DRIVER
+        - name: SYMFONY__ENV__DATABASE_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: wallabag-config
+              key: DATABASE_HOST
+        - name: SYMFONY__ENV__DATABASE_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: wallabag-config
+              key: DATABASE_PORT
+        - name: SYMFONY__ENV__DATABASE_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: wallabag-config
+              key: DATABASE_NAME
+        - name: SYMFONY__ENV__DATABASE_USER
+          valueFrom:
+            configMapKeyRef:
+              name: wallabag-config
+              key: DATABASE_USER
+        - name: SYMFONY__ENV__DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: wallabag-secrets
+              key: postgres-password
+        # Application configuration
+        - name: SYMFONY__ENV__DOMAIN_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: wallabag-config
+              key: DOMAIN_NAME
+        - name: SYMFONY__ENV__SERVER_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: wallabag-config
+              key: SERVER_NAME
+        - name: SYMFONY__ENV__LOCALE
+          valueFrom:
+            configMapKeyRef:
+              name: wallabag-config
+              key: LOCALE
+        - name: SYMFONY__ENV__SECRET
+          valueFrom:
+            secretKeyRef:
+              name: wallabag-secrets
+              key: wallabag-secret
+        # PostgreSQL initialization environment variables
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: wallabag-secrets
+              key: postgres-password
+        - name: POSTGRES_USER
+          valueFrom:
+            configMapKeyRef:
+              name: wallabag-config
+              key: POSTGRES_USER
+        volumeMounts:
+        - name: wallabag-images
+          mountPath: /var/www/wallabag/web/assets/images
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: wallabag-images
+        persistentVolumeClaim:
+          claimName: wallabag-images

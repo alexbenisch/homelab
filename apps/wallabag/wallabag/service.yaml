@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: wallabag-service
+  namespace: wallabag
+  labels:
+    app: wallabag
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30081
+      protocol: TCP
+  selector:
+    app: wallabag

@@ -3,4 +3,5 @@ kind: Namespace
 metadata:
   name: wallabag
   labels:
-    name: wallabag
+    app.kubernetes.io/name: wallabag
+    app.kubernetes.io/managed-by: flux

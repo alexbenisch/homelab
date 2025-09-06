@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wallabag-config
+  namespace: wallabag
+data:
+  # Database configuration
+  DATABASE_DRIVER: "pdo_pgsql"
+  DATABASE_HOST: "wallabag-postgres"
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: "wallabag"
+  DATABASE_USER: "wallabag"
+  
+  # Wallabag application configuration
+  DOMAIN_NAME: "https://wallabag.tail55277.ts.net"
+  SERVER_NAME: "Homelab Wallabag"
+  LOCALE: "en"
+  
+  # PostgreSQL configuration
+  POSTGRES_DB: "wallabag"
+  POSTGRES_USER: "wallabag"
