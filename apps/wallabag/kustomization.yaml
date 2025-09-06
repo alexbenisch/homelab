@@ -8,7 +8,7 @@ metadata:
 resources:
   # Namespace and configuration
   - namespace.yaml
-  - secret.yaml
+  # - secret.yaml  # Applied manually via SOPS for security
   - configmap.yaml
   
   # PostgreSQL database
