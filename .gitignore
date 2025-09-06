@@ -36,14 +36,16 @@ override.tf.json
 .terraformrc
 terraform.rc
 
-# SOPS/Age keys and private documentation
-.sops.yaml
+# SOPS/Age keys and private documentation  
 keys.txt
 age-key.txt
 *.age
 docs/private/
 **/private/
 **/*private*
+
+# Unencrypted secrets (encrypted SOPS files are safe to commit)
+# Note: SOPS encrypted files contain "sops:" metadata and are safe to version control
 
 # Environment files
 .env

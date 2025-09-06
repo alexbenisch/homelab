@@ -1,0 +1,7 @@
+creation_rules:
+  - path_regex: .*secret\.yaml$
+    age: age19ng3apc0ayv6q7t9ru7ry8d0h4496a70ff7yxtaqvk3fmvqmgppsnvn6j4
+  - path_regex: apps/.*/.*secret.*\.yaml$
+    age: age19ng3apc0ayv6q7t9ru7ry8d0h4496a70ff7yxtaqvk3fmvqmgppsnvn6j4
+  - path_regex: .*secrets\.tfvars$
+    age: age19ng3apc0ayv6q7t9ru7ry8d0h4496a70ff7yxtaqvk3fmvqmgppsnvn6j4
