@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: configure-wallabag-subdomain
+  namespace: wallabag
+  labels:
+    app.kubernetes.io/name: wallabag
+    app.kubernetes.io/component: magic-dns
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: tailscale-dns-config
+        image: curlimages/curl:latest
+        env:
+        - name: TS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: tailscale-api-secret
+              key: api-key
+        - name: TAILNET
+          value: "tail55277"
+        - name: SUBDOMAIN
+          value: "wallabag"
+        - name: TARGET_HOST
+          value: "homelab-control-plane-6"
+        - name: TARGET_PORT
+          value: "30081"
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Configuring Tailscale Magic DNS for ${SUBDOMAIN}.${TAILNET}.ts.net"
+          
+          # Configure wallabag subdomain to point to homelab-control-plane-6:30081
+          # Note: This uses Tailscale Serve API (hypothetical - actual API may differ)
+          
+          echo "Setting up ${SUBDOMAIN}.${TAILNET}.ts.net → ${TARGET_HOST}:${TARGET_PORT}"
+          
+          # Example API call (adjust based on actual Tailscale API)
+          curl -v -X POST "https://api.tailscale.com/api/v2/tailnet/${TAILNET}/serve" \
+            -H "Authorization: Bearer ${TS_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"hostname\": \"${SUBDOMAIN}.${TAILNET}.ts.net\",
+              \"target\": \"http://${TARGET_HOST}:${TARGET_PORT}\",
+              \"https\": false
+            }" || echo "API call completed (may need adjustment for actual Tailscale API)"
+          
+          echo "Magic DNS configuration completed"

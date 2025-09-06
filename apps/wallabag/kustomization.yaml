@@ -9,6 +9,7 @@ resources:
   # Namespace and configuration
   - namespace.yaml
   # - secret.yaml  # Applied manually via SOPS for security
+  # - tailscale-secret.yaml  # Applied manually via SOPS for security
   - configmap.yaml
   
   # PostgreSQL database
@@ -20,6 +21,9 @@ resources:
   - wallabag/pvc.yaml
   - wallabag/service.yaml
   - wallabag/deployment.yaml
+  
+  # Magic DNS automation (requires manual secret deployment first)
+  - magic-dns-job.yaml
 
 commonLabels:
   app.kubernetes.io/name: wallabag
